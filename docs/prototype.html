@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轻滑相册 LiteSwipe v1.1 - UI 原型</title>
+<style>
+:root {
+  --blue: #007AFF;
+  --bg: #F2F2F7;
+  --card: #FFFFFF;
+  --text: #1C1C1E;
+  --text2: #8E8E93;
+  --danger: #FF3B30;
+  --success: #34C759;
+  --border: #E5E5EA;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family: -apple-system,'SF Pro Display','PingFang SC','Helvetica Neue',sans-serif;
+  background: #0f0f23;
+  display: flex; justify-content: center; align-items: center;
+  min-height: 100vh; padding: 20px;
+}
+.phone {
+  width: 390px; height: 844px; background: var(--bg);
+  border-radius: 44px; overflow: hidden; position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 3px #2a2a2a;
+}
+
+.sbar {
+  height: 54px; display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 0 28px 6px; font-size: 14px; font-weight: 600;
+  background: var(--card); z-index: 5; position: relative;
+  transition: background 0.3s, color 0.3s;
+}
+.sbar.dk { background:#000; color:#fff; }
+.sbar .time { font-size:15px; font-weight:700; }
+
+.hdr { background:var(--card); padding:4px 20px 10px; }
+.hdr-row { display:flex; justify-content:space-between; align-items:center; }
+.hdr h1 { font-size:28px; font-weight:800; color:var(--text); letter-spacing:-0.5px; }
+.hdr-btn { background:none; border:none; color:var(--blue); font-size:15px; font-weight:500; cursor:pointer; padding:4px 8px; }
+.hdr-sub { font-size:13px; color:var(--text2); margin-top:4px; }
+
+.zoom-hint {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:rgba(0,0,0,0.75); color:#fff; padding:10px 20px; border-radius:16px;
+  font-size:14px; font-weight:600; opacity:0; transition:opacity 0.3s;
+  z-index:20; pointer-events:none; white-space:nowrap;
+}
+
+.content { height:calc(100% - 54px); overflow:hidden; position:relative; }
+.screen { display:none; height:100%; flex-direction:column; position:absolute; inset:0; }
+.screen.active { display:flex; }
+.gscroll { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:90px; }
+
+.select-banner {
+  display:none; padding:8px 20px; background:var(--card);
+  border-bottom:0.5px solid var(--border); align-items:center; justify-content:space-between;
+}
+.select-banner.show { display:flex; }
+.select-banner .sel-count { font-size:15px; font-weight:600; color:var(--text); }
+.select-banner .sel-btns { display:flex; gap:10px; }
+.select-banner .sel-btn {
+  background:none; border:none; color:var(--blue); font-size:14px; font-weight:500; cursor:pointer;
+}
+
+.queue-bar {
+  display:none; padding:8px 16px; background:var(--card);
+  border-bottom:0.5px solid var(--border); align-items:center; gap:8px; cursor:pointer;
+}
+.queue-bar.show { display:flex; }
+.queue-bar .q-icon { font-size:18px; color:var(--blue); }
+.queue-bar .q-text { flex:1; font-size:14px; font-weight:600; color:var(--text); }
+.queue-bar .q-actions { display:flex; gap:8px; }
+.queue-bar .q-btn {
+  background:none; border:none; color:var(--blue); font-size:13px; font-weight:500; cursor:pointer;
+}
+
+.dg-head {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 16px 8px;
+}
+.dg-title { font-size:20px; font-weight:700; color:var(--text); }
+.dg-sel-btn {
+  display:none; background:none; border:none; color:var(--blue);
+  font-size:13px; font-weight:500; cursor:pointer;
+}
+.dg-sel-btn.show { display:block; }
+
+.grid { display:grid; gap:2px; padding:0 2px; transition:grid-template-columns 0.2s; }
+.grid.col2 { grid-template-columns:repeat(2,1fr); }
+.grid.col3 { grid-template-columns:repeat(3,1fr); }
+.grid.col5 { grid-template-columns:repeat(5,1fr); }
+.grid.col7 { grid-template-columns:repeat(7,1fr); }
+
+.gi {
+  aspect-ratio:1; border-radius:2px; overflow:hidden;
+  cursor:pointer; position:relative; transition:transform 0.15s;
+}
+.gi:active { transform:scale(0.96); }
+.gi img { width:100%; height:100%; object-fit:cover; display:block; }
+.gi .dur {
+  position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.6);
+  color:#fff; font-size:11px; font-weight:600; padding:1px 5px; border-radius:4px;
+}
+.gi .live-badge {
+  position:absolute; top:4px; left:4px; background:rgba(255,165,0,0.85);
+  color:#fff; font-size:9px; font-weight:700; padding:2px 5px; border-radius:3px;
+}
+.gi .queue-badge {
+  position:absolute; bottom:4px; left:4px; background:rgba(0,122,255,0.85);
+  color:#fff; font-size:9px; font-weight:600; padding:2px 5px; border-radius:3px;
+  display:none;
+}
+.gi .queue-badge.show { display:block; }
+.gi .ck {
+  position:absolute; top:6px; right:6px; width:24px; height:24px;
+  border-radius:50%; border:2px solid rgba(255,255,255,0.9);
+  background:rgba(0,0,0,0.15); display:none; align-items:center;
+  justify-content:center; cursor:pointer; font-size:13px; color:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:all 0.2s;
+}
+.gi .ck.show { display:flex; }
+.gi .ck.on { background:var(--blue); border-color:var(--blue); }
+.gi .ck.on::after { content:'✓'; }
+.gi .tov { position:absolute; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; }
+.gi .tdays { font-size:10px; font-weight:600; color:#fff; background:rgba(0,0,0,0.5); padding:2px 6px; border-radius:4px; }
+
+/* Bottom Action Bar */
+.bbar {
+  display:none; padding:12px 20px; background:var(--card);
+  border-top:0.5px solid var(--border); align-items:center; justify-content:space-between;
+  position:absolute; bottom:56px; left:0; right:0; z-index:3;
+}
+.bbar.show { display:flex; }
+.bbar .cnt { font-size:15px; font-weight:600; color:var(--text); }
+.bb { border:none; padding:8px 18px; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; color:#fff; }
+.bb-r { background:var(--danger); }
+.bb-b { background:var(--blue); }
+.bb+.bb { margin-left:8px; }
+
+.tbar { gap:12px; justify-content:center; }
+.tbar .bb { flex:1; text-align:center; }
+
+/* Import Bottom Bar */
+.import-bbar {
+  display:none; padding:10px 20px; background:var(--card);
+  border-top:0.5px solid var(--border); align-items:center; justify-content:space-between;
+  position:absolute; bottom:56px; left:0; right:0; z-index:3;
+}
+.import-bbar.show { display:flex; }
+.import-bbar .bb { font-size:14px; padding:8px 16px; }
+
+/* ===== BOTTOM NAV BAR ===== */
+.bottom-nav {
+  display:flex; padding:6px 0 24px; background:var(--card);
+  border-top:0.5px solid var(--border); position:absolute; bottom:0; left:0; right:0; z-index:10;
+}
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; border:none; background:none; font-size:10px; color:var(--text2); font-weight:500; }
+.nav-item .nav-icon { font-size:22px; }
+.nav-item.act { color:var(--blue); }
+
+/* ===== VIEWER (Local) ===== */
+.vs { background:#000; }
+.vback {
+  position:absolute; top:8px; left:16px; color:rgba(255,255,255,0.85);
+  font-size:18px; z-index:10; cursor:pointer; font-weight:500;
+  padding:4px 10px; border-radius:8px; background:rgba(255,255,255,0.1);
+}
+.viw { flex:1; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+.viw img { max-width:100%; max-height:100%; object-fit:contain; user-select:none; transition:transform 0.25s ease-out; pointer-events:none; }
+.vinfo { background:rgba(0,0,0,0.55); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); padding:14px 20px 20px; color:#fff; }
+.vinfo .vn { font-size:15px; font-weight:600; }
+.vinfo .vm { font-size:12px; color:rgba(255,255,255,0.55); margin-top:2px; }
+.gind { position:absolute; left:50%; transform:translateX(-50%); padding:8px 22px; border-radius:20px; font-size:14px; font-weight:600; opacity:0; transition:opacity 0.2s; z-index:20; pointer-events:none; }
+.gind.ti2 { top:16px; background:rgba(255,59,48,0.9); color:#fff; }
+.gind.bi2 { bottom:100px; background:rgba(255,255,255,0.9); color:var(--text); }
+.gind.bb2 { bottom:100px; background:rgba(0,122,255,0.9); color:#fff; }
+.gind.vis { opacity:1; }
+
+.snack {
+  position:absolute; bottom:90px; left:20px; right:20px;
+  background:#333; color:#fff; border-radius:10px; padding:12px 16px;
+  display:none; align-items:center; justify-content:space-between; z-index:25;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);
+}
+.snack.show { display:flex; }
+.snack .st { font-size:14px; }
+.snack .sb { background:none; border:none; color:var(--blue); font-size:14px; font-weight:600; cursor:pointer; }
+
+/* ===== EXTERNAL VIEWER (WeChat Style) ===== */
+.ev-top {
+  position:absolute; top:0; left:0; right:0; z-index:10;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 16px; background:rgba(0,0,0,0.3);
+}
+.ev-top .ev-back { color:#fff; font-size:20px; cursor:pointer; padding:4px 8px; font-weight:500; }
+.ev-top .ev-counter { color:#fff; font-size:16px; font-weight:600; }
+.ev-top .ev-select {
+  width:28px; height:28px; border-radius:50%;
+  border:2px solid rgba(255,255,255,0.8); background:rgba(0,0,0,0.2);
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:14px; color:#fff; transition:all 0.2s;
+}
+.ev-top .ev-select.on { background:var(--success); border-color:var(--success); }
+.ev-top .ev-select.on::after { content:'✓'; }
+
+.ev-bottom {
+  position:absolute; bottom:0; left:0; right:0; z-index:10;
+  background:rgba(0,0,0,0.5); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  padding:10px 16px 24px;
+}
+.ev-thumbs {
+  display:flex; gap:4px; overflow-x:auto; padding-bottom:8px;
+  scrollbar-width:none; -ms-overflow-style:none;
+}
+.ev-thumbs::-webkit-scrollbar { display:none; }
+.ev-thumb {
+  width:48px; height:48px; border-radius:4px; overflow:hidden;
+  flex-shrink:0; cursor:pointer; border:2px solid transparent; transition:border-color 0.2s;
+}
+.ev-thumb.active { border-color:var(--blue); }
+.ev-thumb img { width:100%; height:100%; object-fit:cover; }
+.ev-bottom-row {
+  display:flex; align-items:center; justify-content:flex-end; margin-top:6px;
+}
+.ev-import-btn {
+  background:var(--blue); color:#fff; border:none; padding:6px 16px;
+  border-radius:16px; font-size:13px; font-weight:600; cursor:pointer;
+}
+
+/* Queue Sheet */
+.queue-sheet {
+  position:absolute; bottom:0; left:0; right:0; z-index:50;
+  background:var(--card); border-radius:16px 16px 0 0;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.15);
+  transform:translateY(100%); transition:transform 0.3s ease;
+  max-height:60%;
+}
+.queue-sheet.show { transform:translateY(0); }
+.queue-sheet-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px 12px; border-bottom:0.5px solid var(--border);
+}
+.queue-sheet-hdr .qs-title { font-size:17px; font-weight:700; color:var(--text); }
+.queue-sheet-hdr .qs-btn {
+  background:none; border:none; font-size:14px; font-weight:500; cursor:pointer;
+}
+.queue-sheet-hdr .qs-clear { color:var(--danger); }
+.queue-sheet-hdr .qs-import { color:#fff; background:var(--blue); padding:6px 14px; border-radius:16px; }
+.queue-sheet-body { padding:12px; overflow-y:auto; max-height:calc(60vh - 60px); }
+.queue-sheet-body .grid { gap:4px; }
+.queue-sheet-hint { text-align:center; color:var(--text2); font-size:13px; padding:8px 0; }
+.queue-sheet-overlay {
+  display:none; position:absolute; inset:0; background:rgba(0,0,0,0.35); z-index:49;
+}
+.queue-sheet-overlay.show { display:block; }
+
+/* Dialogs */
+.dov { display:none; position:absolute; inset:0; background:rgba(0,0,0,0.4); z-index:100; align-items:center; justify-content:center; }
+.dov.show { display:flex; }
+.dlg { background:var(--card); border-radius:14px; padding:20px 24px; width:280px; text-align:center; }
+.dlg h3 { font-size:17px; font-weight:600; color:var(--text); margin-bottom:8px; }
+.dlg p { font-size:14px; color:var(--text2); margin-bottom:16px; line-height:1.5; }
+.dlg .da { display:flex; border-top:0.5px solid var(--border); margin:0 -24px -20px; }
+.dlg .da button { flex:1; padding:14px; border:none; background:none; font-size:17px; cursor:pointer; }
+.dlg .da .dc { color:var(--text2); }
+.dlg .da .dd { color:var(--danger); font-weight:600; }
+.dlg .da .dp { color:var(--blue); font-weight:600; }
+.pw { background:rgba(118,118,128,0.12); border-radius:4px; height:8px; margin:12px 0; overflow:hidden; }
+.pw .pb { height:100%; background:var(--blue); border-radius:4px; width:0%; transition:width 0.5s; }
+
+/* Empty State */
+.empty-state {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  flex:1; color:var(--text2); padding:40px;
+}
+.empty-state .empty-icon { font-size:48px; margin-bottom:12px; }
+.empty-state .empty-text { font-size:15px; text-align:center; }
+
+/* Page Nav */
+.pnav { position:fixed; top:16px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:1000; flex-wrap:wrap; justify-content:center; }
+.pnav button { background:rgba(255,255,255,0.92); border:none; padding:7px 14px; border-radius:18px; font-size:12px; font-weight:600; cursor:pointer; color:var(--text); box-shadow:0 2px 10px rgba(0,0,0,0.15); transition:all 0.2s; }
+.pnav button:hover,.pnav button.act { background:var(--blue); color:#fff; }
+
+#toast {
+  position:absolute; top:80px; left:50%; transform:translateX(-50%) translateY(-20px);
+  background:rgba(0,0,0,0.8); color:#fff; padding:10px 20px; border-radius:20px;
+  font-size:14px; font-weight:500; opacity:0; transition:all 0.3s; z-index:50;
+  pointer-events:none; white-space:nowrap;
+}
+
+.home-ind { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; background:rgba(0,0,0,0.18); border-radius:3px; z-index:11; }
+</style>
+</head>
+<body>
+
+<div class="pnav">
+  <button class="act" onclick="go('gallery')">图库</button>
+  <button onclick="go('import')">导入</button>
+  <button onclick="go('gallery-viewer')">本地大图</button>
+  <button onclick="go('ext-viewer')">外部大图</button>
+  <button onclick="go('trash')">最近删除</button>
+</div>
+
+<div class="phone" id="phone">
+  <div class="sbar" id="sbar">
+    <span class="time">9:41</span>
+    <span>●●●● WiFi 100%</span>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== 图库 (Gallery) ===== -->
+    <div class="screen active" id="s-gallery">
+      <div class="hdr">
+        <div class="hdr-row">
+          <h1>图库</h1>
+          <button class="hdr-btn" id="gallery-sel-btn" onclick="toggleMulti('gallery')">选择</button>
+        </div>
+      </div>
+      <div class="select-banner" id="gallery-sel-banner">
+        <span class="sel-count" id="gallery-sel-count">已选择 0 项</span>
+        <div class="sel-btns">
+          <button class="sel-btn" onclick="selectAll('gallery')">全选</button>
+          <button class="sel-btn" onclick="toggleMulti('gallery')">取消</button>
+        </div>
+      </div>
+      <div class="zoom-hint" id="gallery-zh"></div>
+      <div class="gscroll" id="gallery-scroll">
+        <div class="date-group">
+          <div class="dg-head">
+            <span class="dg-title">今天</span>
+            <button class="dg-sel-btn" data-ms="gallery" onclick="selectGroup(this)">全选</button>
+          </div>
+          <div class="grid col3 gallery-grid" id="g-g1"></div>
+        </div>
+        <div class="date-group">
+          <div class="dg-head">
+            <span class="dg-title">昨天</span>
+            <button class="dg-sel-btn" data-ms="gallery" onclick="selectGroup(this)">全选</button>
+          </div>
+          <div class="grid col3 gallery-grid" id="g-g2"></div>
+        </div>
+        <div class="date-group">
+          <div class="dg-head">
+            <span class="dg-title">3月23日</span>
+            <button class="dg-sel-btn" data-ms="gallery" onclick="selectGroup(this)">全选</button>
+          </div>
+          <div class="grid col3 gallery-grid" id="g-g3"></div>
+        </div>
+      </div>
+      <div class="bbar" id="gallery-bbar">
+        <span class="cnt" id="gallery-cnt">已选择 0 项</span>
+        <button class="bb bb-r" onclick="showDlg('d-trash')">移入回收站</button>
+      </div>
+      <div class="bottom-nav" id="nav-gallery">
+        <button class="nav-item act" onclick="go('gallery')"><span class="nav-icon">🖼</span><span>图库</span></button>
+        <button class="nav-item" onclick="go('import')"><span class="nav-icon">📥</span><span>导入</span></button>
+        <button class="nav-item" onclick="go('trash')"><span class="nav-icon">🗑</span><span>最近删除</span></button>
+      </div>
+    </div>
+
+    <!-- ===== 导入 (Import) ===== -->
+    <div class="screen" id="s-import">
+      <div class="hdr">
+        <div class="hdr-row">
+          <h1>导入</h1>
+          <button class="hdr-btn" id="import-sel-btn" onclick="toggleImportSelectAll()">选择</button>
+        </div>
+      </div>
+      <div class="select-banner" id="import-sel-banner">
+        <span class="sel-count" id="import-sel-count">已选择 0 项</span>
+        <div class="sel-btns">
+          <button class="sel-btn" onclick="importSelectAll()">全选</button>
+          <button class="sel-btn" onclick="importDeselectAll()">取消</button>
+        </div>
+      </div>
+      <div class="queue-bar" id="import-queue-bar" onclick="showQueueSheet()">
+        <span class="q-icon">📥</span>
+        <span class="q-text" id="import-q-text">待导入 (0)</span>
+        <div class="q-actions">
+          <button class="q-btn" onclick="event.stopPropagation();performImportAll()">导入全部</button>
+          <button class="q-btn" onclick="event.stopPropagation();clearQueue()">清空</button>
+        </div>
+      </div>
+      <div class="zoom-hint" id="import-zh"></div>
+      <div class="gscroll" id="import-scroll">
+        <div class="date-group">
+          <div class="dg-head">
+            <span class="dg-title">SD 卡 - 今天</span>
+            <button class="dg-sel-btn show" data-ms="import" onclick="selectGroup(this)">全选</button>
+          </div>
+          <div class="grid col3 import-grid" id="g-i1"></div>
+        </div>
+        <div class="date-group">
+          <div class="dg-head">
+            <span class="dg-title">SD 卡 - 较早</span>
+            <button class="dg-sel-btn show" data-ms="import" onclick="selectGroup(this)">全选</button>
+          </div>
+          <div class="grid col3 import-grid" id="g-i2"></div>
+        </div>
+      </div>
+      <!-- Import bottom action bar -->
+      <div class="import-bbar" id="import-bbar">
+        <span class="cnt" id="import-cnt">已选择 0 项</span>
+        <div>
+          <button class="bb bb-b" onclick="performImportAll()">导入</button>
+          <button class="bb bb-r" onclick="showDlg('d-del-ext')">删除</button>
+        </div>
+      </div>
+      <div class="bottom-nav" id="nav-import">
+        <button class="nav-item" onclick="go('gallery')"><span class="nav-icon">🖼</span><span>图库</span></button>
+        <button class="nav-item act" onclick="go('import')"><span class="nav-icon">📥</span><span>导入</span></button>
+        <button class="nav-item" onclick="go('trash')"><span class="nav-icon">🗑</span><span>最近删除</span></button>
+      </div>
+    </div>
+
+    <!-- ===== 本地大图查看器 (Gallery Viewer) ===== -->
+    <div class="screen vs" id="s-gallery-viewer">
+      <div class="viw" id="gv-w">
+        <img id="gv-i" src="" draggable="false">
+        <div class="gind ti2" id="gv-ti">↑ 移入回收站</div>
+        <div class="gind bi2" id="gv-bi">↓ 返回</div>
+      </div>
+      <div class="vback" onclick="go('gallery')">‹</div>
+      <div class="vinfo"><div class="vn">IMG_20260325_001.jpg</div><div class="vm">2026年3月25日 · 4032×3024 · 3.2MB</div></div>
+      <div class="snack" id="gv-sk">
+        <span class="st">已移入回收站</span>
+        <button class="sb" onclick="hideSnack('gv-sk')">撤销</button>
+      </div>
+    </div>
+
+    <!-- ===== 外部大图查看器 (External Viewer - WeChat Style) ===== -->
+    <div class="screen vs" id="s-ext-viewer">
+      <div class="viw" id="ev-w">
+        <img id="ev-i" src="" draggable="false">
+        <div class="gind ti2" id="ev-ti">↑ 隐藏</div>
+        <div class="gind bb2" id="ev-bi">↓ 加入待导入</div>
+      </div>
+      <div class="ev-top">
+        <span class="ev-back" onclick="go('import')">‹</span>
+        <span class="ev-counter" id="ev-counter">1/12</span>
+        <div class="ev-select" id="ev-sel" onclick="toggleEvSelect()"></div>
+      </div>
+      <div class="ev-bottom" id="ev-bottom">
+        <div class="ev-thumbs" id="ev-thumbs"></div>
+        <div class="ev-bottom-row">
+          <button class="ev-import-btn" id="ev-import-btn" onclick="performImportAll()">导入 (0)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 最近删除 (Trash) ===== -->
+    <div class="screen" id="s-trash">
+      <div class="hdr">
+        <div class="hdr-row">
+          <h1>最近删除</h1>
+          <button class="hdr-btn" id="tr-sel-btn" onclick="toggleMulti('trash')">选择</button>
+        </div>
+        <p class="hdr-sub">照片将在 30 天后永久删除</p>
+      </div>
+      <div class="select-banner" id="trash-sel-banner">
+        <span class="sel-count" id="trash-sel-count">已选择 0 项</span>
+        <div class="sel-btns">
+          <button class="sel-btn" onclick="selectAll('trash')">全选</button>
+          <button class="sel-btn" onclick="toggleMulti('trash')">取消</button>
+        </div>
+      </div>
+      <div class="gscroll">
+        <div class="grid col3 trash-grid" id="g-tr" style="padding:4px;"></div>
+      </div>
+      <div class="bbar tbar" id="tr-bbar">
+        <button class="bb bb-b" onclick="showDlg('d-restore')">恢复</button>
+        <button class="bb bb-r" onclick="showDlg('d-perm')">永久删除</button>
+      </div>
+      <div class="bottom-nav" id="nav-trash">
+        <button class="nav-item" onclick="go('gallery')"><span class="nav-icon">🖼</span><span>图库</span></button>
+        <button class="nav-item" onclick="go('import')"><span class="nav-icon">📥</span><span>导入</span></button>
+        <button class="nav-item act" onclick="go('trash')"><span class="nav-icon">🗑</span><span>最近删除</span></button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Queue Sheet -->
+  <div class="queue-sheet-overlay" id="qs-overlay" onclick="hideQueueSheet()"></div>
+  <div class="queue-sheet" id="qs-sheet">
+    <div class="queue-sheet-hdr">
+      <button class="qs-btn qs-clear" onclick="clearQueue();hideQueueSheet()">清空</button>
+      <span class="qs-title" id="qs-title">待导入 (0)</span>
+      <button class="qs-btn qs-import" onclick="performImportAll();hideQueueSheet()">导入全部</button>
+    </div>
+    <div class="queue-sheet-body">
+      <div class="grid col3" id="g-q" style="gap:4px;"></div>
+      <p class="queue-sheet-hint">点击图片可移除</p>
+    </div>
+  </div>
+
+  <!-- DIALOGS -->
+  <div class="dov" id="d-trash"><div class="dlg"><h3>移入回收站</h3><p>选中的照片将移入回收站，30 天后自动永久删除</p><div class="da"><button class="dc" onclick="hideDlg('d-trash')">取消</button><button class="dd" onclick="hideDlg('d-trash');toast('已移入回收站')">移入</button></div></div></div>
+  <div class="dov" id="d-del-ext"><div class="dlg"><h3>删除外部文件</h3><p>将从外部存储中永久删除选中的文件，此操作不可恢复</p><div class="da"><button class="dc" onclick="hideDlg('d-del-ext')">取消</button><button class="dd" onclick="hideDlg('d-del-ext');toast('已删除')">删除</button></div></div></div>
+  <div class="dov" id="d-prog"><div class="dlg"><h3>正在导入...</h3><p id="prog-t">0 / 3</p><div class="pw"><div class="pb" id="prog-b"></div></div><div class="da"><button class="dc" onclick="hideDlg('d-prog')">取消</button></div></div></div>
+  <div class="dov" id="d-done"><div class="dlg"><h3>导入完成 ✓</h3><p id="d-done-t">成功导入 3 张照片到本地相册</p><div class="da"><button class="dp" onclick="hideDlg('d-done')">完成</button></div></div></div>
+  <div class="dov" id="d-restore"><div class="dlg"><h3>恢复照片</h3><p>选中的照片将恢复到原位置</p><div class="da"><button class="dc" onclick="hideDlg('d-restore')">取消</button><button class="dp" onclick="hideDlg('d-restore');toast('已恢复')">恢复</button></div></div></div>
+  <div class="dov" id="d-perm"><div class="dlg"><h3>永久删除</h3><p>此操作不可恢复，照片将被永久删除</p><div class="da"><button class="dc" onclick="hideDlg('d-perm')">取消</button><button class="dd" onclick="hideDlg('d-perm');toast('已永久删除')">删除</button></div></div></div>
+
+  <div id="toast"></div>
+  <div class="home-ind"></div>
+</div>
+
+<script>
+/* ========== Image Generation ========== */
+const C=['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8','#F7DC6F','#BB8FCE','#85C1E9','#F8C471','#82E0AA','#F1948A','#AED6F1','#D7BDE2','#A3E4D7','#FAD7A0','#A9CCE3','#D5DBDB','#EDBB99','#ABB2B9','#F9E79F','#A2D9CE','#F5B7B1','#D2B4DE'];
+function mkI(i){
+  const c=document.createElement('canvas');c.width=200;c.height=200;const x=c.getContext('2d');
+  x.fillStyle=C[i%C.length];x.fillRect(0,0,200,200);
+  const f=[
+    ()=>{x.fillStyle='rgba(255,255,255,0.3)';x.beginPath();x.arc(100,100,60,0,Math.PI*2);x.fill()},
+    ()=>{x.fillStyle='rgba(0,0,0,0.1)';[30,80,130].forEach(p=>x.fillRect(p,60,40,80))},
+    ()=>{x.fillStyle='rgba(255,255,255,0.2)';x.beginPath();x.moveTo(100,30);x.lineTo(170,170);x.lineTo(30,170);x.fill()},
+    ()=>{x.fillStyle='rgba(0,0,0,0.12)';x.fillRect(40,40,120,120);x.fillStyle='rgba(255,255,255,0.25)';x.fillRect(60,60,80,80)},
+    ()=>{x.fillStyle='rgba(255,255,255,0.15)';for(let j=0;j<5;j++){x.beginPath();x.arc(40+j*30,100+Math.sin(j)*30,15,0,Math.PI*2);x.fill()}}
+  ];
+  f[i%f.length]();
+  x.fillStyle='rgba(255,255,255,0.6)';x.font='bold 28px sans-serif';x.textAlign='center';x.fillText(String(i+1),100,110);
+  return c.toDataURL();
+}
+const imgs=Array.from({length:30},(_,i)=>mkI(i));
+
+/* ========== Import Queue (Global State) ========== */
+let importQueue = [];
+
+function addToQueue(idx) {
+  if (!importQueue.includes(idx)) {
+    importQueue.push(idx);
+    updateQueueUI();
+    toast('已加入待导入');
+  }
+}
+
+function removeFromQueue(idx) {
+  importQueue = importQueue.filter(i => i !== idx);
+  updateQueueUI();
+}
+
+function clearQueue() {
+  importQueue = [];
+  updateQueueUI();
+  updateImportChecks();
+  toast('已清空待导入');
+}
+
+function updateQueueUI() {
+  const n = importQueue.length;
+  // Import page queue bar
+  const qBar = document.getElementById('import-queue-bar');
+  qBar.classList.toggle('show', n > 0);
+  document.getElementById('import-q-text').textContent = `待导入 (${n})`;
+  // Import page bottom bar
+  const bbar = document.getElementById('import-bbar');
+  bbar.classList.toggle('show', n > 0);
+  document.getElementById('import-cnt').textContent = `已选择 ${n} 项`;
+  // Import page select banner
+  const selBanner = document.getElementById('import-sel-banner');
+  selBanner.classList.toggle('show', n > 0);
+  document.getElementById('import-sel-count').textContent = `已选择 ${n} 项`;
+  // External viewer
+  document.getElementById('ev-import-btn').textContent = `导入 (${n})`;
+  updateEvThumbs();
+  updateEvSelectIcon();
+  // Queue sheet
+  document.getElementById('qs-title').textContent = `待导入 (${n})`;
+  updateQueueGrid();
+  // Update queue badges on import grid items
+  document.querySelectorAll('#s-import .gi').forEach(gi => {
+    const idx = parseInt(gi.dataset.idx);
+    const badge = gi.querySelector('.queue-badge');
+    if (badge) badge.classList.toggle('show', importQueue.includes(idx));
+  });
+}
+
+function updateQueueGrid() {
+  const g = document.getElementById('g-q');
+  g.innerHTML = '';
+  importQueue.forEach((idx, qi) => {
+    const d = document.createElement('div');
+    d.className = 'gi';
+    const img = document.createElement('img');
+    img.src = imgs[idx % imgs.length];
+    d.appendChild(img);
+    d.onclick = () => { removeFromQueue(idx); toast('已移除'); };
+    g.appendChild(d);
+  });
+}
+
+function updateEvThumbs() {
+  const th = document.getElementById('ev-thumbs');
+  th.innerHTML = '';
+  importQueue.forEach((idx, i) => {
+    const d = document.createElement('div');
+    d.className = 'ev-thumb' + (idx === currentEvIdx ? ' active' : '');
+    const img = document.createElement('img');
+    img.src = imgs[idx % imgs.length];
+    d.appendChild(img);
+    d.onclick = () => { currentEvIdx = idx; showEvImage(); };
+    th.appendChild(d);
+  });
+  document.getElementById('ev-bottom').style.display = importQueue.length > 0 ? 'block' : 'none';
+}
+
+function updateEvSelectIcon() {
+  const sel = document.getElementById('ev-sel');
+  sel.classList.toggle('on', importQueue.includes(currentEvIdx));
+}
+
+/* ========== Grid Item Creation ========== */
+function mk(idx, o={}) {
+  const d = document.createElement('div');
+  d.className = 'gi';
+  d.dataset.idx = idx;
+  const img = document.createElement('img');
+  img.src = imgs[idx % imgs.length];
+  d.appendChild(img);
+  if (o.video) {
+    const s = document.createElement('span');
+    s.className = 'dur';
+    s.textContent = '0:' + String(15 + (idx % 10) * 5).padStart(2, '0');
+    d.appendChild(s);
+  }
+  if (o.live) {
+    const lb = document.createElement('span');
+    lb.className = 'live-badge';
+    lb.textContent = 'LIVE';
+    d.appendChild(lb);
+  }
+  if (o.ck) {
+    const c = document.createElement('div');
+    c.className = 'ck' + (o.ckVis ? ' show' : '');
+    if (o.cls) c.dataset.cls = o.cls;
+    c.onclick = e => { e.stopPropagation(); c.classList.toggle('on'); o.onCk?.(); };
+    d.appendChild(c);
+  }
+  if (o.importMode) {
+    const c = document.createElement('div');
+    c.className = 'ck show';
+    c.dataset.cls = 'imp-ck';
+    c.onclick = e => {
+      e.stopPropagation();
+      if (importQueue.includes(idx)) {
+        removeFromQueue(idx);
+        c.classList.remove('on');
+      } else {
+        addToQueue(idx);
+        c.classList.add('on');
+      }
+    };
+    if (importQueue.includes(idx)) c.classList.add('on');
+    d.appendChild(c);
+    const qb = document.createElement('span');
+    qb.className = 'queue-badge' + (importQueue.includes(idx) ? ' show' : '');
+    qb.textContent = '待导入';
+    d.appendChild(qb);
+  }
+  if (o.trash) {
+    const ov = document.createElement('div');
+    ov.className = 'tov';
+    const sp = document.createElement('span');
+    sp.className = 'tdays';
+    sp.textContent = `还剩 ${o.td || 28} 天`;
+    ov.appendChild(sp);
+    d.appendChild(ov);
+    const c = document.createElement('div');
+    c.className = 'ck';
+    c.dataset.cls = 'tr-ck';
+    c.onclick = e => { e.stopPropagation(); c.classList.toggle('on'); updTrCnt(); };
+    d.appendChild(c);
+  }
+  if (o.onClick) {
+    d.addEventListener('click', e => {
+      if (!e.target.closest('.ck')) o.onClick(idx);
+    });
+  }
+  return d;
+}
+
+function fill(id, s, n, o={}) {
+  const g = document.getElementById(id);
+  if (!g) return;
+  for (let i = s; i < s + n; i++) {
+    g.appendChild(mk(i, {...o, video: i % 7 === 0, live: i % 5 === 2}));
+  }
+}
+
+/* ========== Populate Grids ========== */
+fill('g-g1', 0, 6, {ck:true, cls:'g-ck', onClick:()=>go('gallery-viewer'), onCk:()=>updCnt('gallery')});
+fill('g-g2', 6, 9, {ck:true, cls:'g-ck', onClick:()=>go('gallery-viewer'), onCk:()=>updCnt('gallery')});
+fill('g-g3', 15, 6, {ck:true, cls:'g-ck', onClick:()=>go('gallery-viewer'), onCk:()=>updCnt('gallery')});
+
+fill('g-i1', 0, 6, {importMode:true, onClick:(idx)=>{currentEvIdx=idx;go('ext-viewer')}});
+fill('g-i2', 6, 6, {importMode:true, onClick:(idx)=>{currentEvIdx=idx;go('ext-viewer')}});
+
+fill('g-tr', 0, 6, {trash:true, td:28});
+fill('g-tr', 6, 3, {trash:true, td:15});
+
+document.getElementById('gv-i').src = imgs[0];
+
+/* ========== External Viewer State ========== */
+let currentEvIdx = 0;
+const extItems = Array.from({length:12}, (_,i) => i);
+
+function showEvImage() {
+  document.getElementById('ev-i').src = imgs[currentEvIdx % imgs.length];
+  const pos = extItems.indexOf(currentEvIdx);
+  document.getElementById('ev-counter').textContent = `${pos + 1}/${extItems.length}`;
+  updateEvSelectIcon();
+  updateEvThumbs();
+}
+
+function toggleEvSelect() {
+  if (importQueue.includes(currentEvIdx)) {
+    removeFromQueue(currentEvIdx);
+  } else {
+    addToQueue(currentEvIdx);
+  }
+  updateImportChecks();
+}
+
+function updateImportChecks() {
+  document.querySelectorAll('#s-import [data-cls="imp-ck"]').forEach(ck => {
+    const gi = ck.closest('.gi');
+    const idx = parseInt(gi.dataset.idx);
+    ck.classList.toggle('on', importQueue.includes(idx));
+  });
+}
+
+/* ========== Import Page Actions ========== */
+function toggleImportSelectAll() {
+  const allItems = [];
+  document.querySelectorAll('#s-import .gi').forEach(gi => allItems.push(parseInt(gi.dataset.idx)));
+  const allInQueue = allItems.every(idx => importQueue.includes(idx));
+  if (allInQueue) {
+    importQueue = [];
+  } else {
+    allItems.forEach(idx => { if (!importQueue.includes(idx)) importQueue.push(idx); });
+  }
+  updateQueueUI();
+  updateImportChecks();
+}
+
+function importSelectAll() {
+  document.querySelectorAll('#s-import .gi').forEach(gi => {
+    const idx = parseInt(gi.dataset.idx);
+    if (!importQueue.includes(idx)) importQueue.push(idx);
+  });
+  updateQueueUI();
+  updateImportChecks();
+}
+
+function importDeselectAll() {
+  const toRemove = [];
+  document.querySelectorAll('#s-import .gi').forEach(gi => toRemove.push(parseInt(gi.dataset.idx)));
+  importQueue = importQueue.filter(i => !toRemove.includes(i));
+  updateQueueUI();
+  updateImportChecks();
+}
+
+function performImportAll() {
+  if (!importQueue.length) return;
+  const n = importQueue.length;
+  showDlg('d-prog');
+  const b = document.getElementById('prog-b'), t = document.getElementById('prog-t');
+  let p = 0;
+  b.style.width = '0%';
+  const iv = setInterval(() => {
+    p++;
+    b.style.width = (p / n * 100) + '%';
+    t.textContent = `${p} / ${n}`;
+    if (p >= n) {
+      clearInterval(iv);
+      setTimeout(() => {
+        hideDlg('d-prog');
+        document.getElementById('d-done-t').textContent = `成功导入 ${n} 张照片到本地相册`;
+        showDlg('d-done');
+        importQueue = [];
+        updateQueueUI();
+        updateImportChecks();
+      }, 400);
+    }
+  }, 500);
+}
+
+/* ========== Queue Sheet ========== */
+function showQueueSheet() {
+  document.getElementById('qs-overlay').classList.add('show');
+  document.getElementById('qs-sheet').classList.add('show');
+}
+
+function hideQueueSheet() {
+  document.getElementById('qs-overlay').classList.remove('show');
+  document.getElementById('qs-sheet').classList.remove('show');
+}
+
+/* ========== Pinch-to-Zoom (Ctrl+Scroll) ========== */
+const colMap = [2, 3, 5, 7];
+const zoomState = {gallery: 1, import: 1};
+let zhTimer = {};
+
+function setZoom(ctx, idx) {
+  idx = Math.max(0, Math.min(3, idx));
+  zoomState[ctx] = idx;
+  const cols = colMap[idx];
+  const cls = ctx === 'gallery' ? 'gallery-grid' : 'import-grid';
+  document.querySelectorAll('.' + cls).forEach(g => {
+    g.className = g.className.replace(/col\d/, 'col' + cols);
+  });
+  const zh = document.getElementById(ctx + '-zh');
+  zh.textContent = cols + ' 列';
+  zh.style.opacity = '1';
+  clearTimeout(zhTimer[ctx]);
+  zhTimer[ctx] = setTimeout(() => { zh.style.opacity = '0'; }, 1000);
+}
+
+document.getElementById('gallery-scroll').addEventListener('wheel', e => {
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    setZoom('gallery', zoomState.gallery + (e.deltaY > 0 ? 1 : -1));
+  }
+}, {passive: false});
+
+document.getElementById('import-scroll').addEventListener('wheel', e => {
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    setZoom('import', zoomState.import + (e.deltaY > 0 ? 1 : -1));
+  }
+}, {passive: false});
+
+/* ========== Multi-select ========== */
+const msState = {gallery: false, trash: false};
+
+function toggleMulti(ctx) {
+  msState[ctx] = !msState[ctx];
+  const on = msState[ctx];
+  if (ctx === 'gallery') {
+    document.getElementById('gallery-sel-btn').textContent = on ? '完成' : '选择';
+    document.querySelectorAll('[data-cls="g-ck"]').forEach(c => { c.classList.toggle('show', on); if (!on) c.classList.remove('on'); });
+    document.getElementById('gallery-bbar').classList.toggle('show', on);
+    document.getElementById('nav-gallery').style.display = on ? 'none' : 'flex';
+    document.getElementById('gallery-sel-banner').classList.toggle('show', on);
+    document.querySelectorAll('#s-gallery .dg-sel-btn').forEach(b => b.classList.toggle('show', on));
+    updCnt('gallery');
+  } else if (ctx === 'trash') {
+    document.getElementById('tr-sel-btn').textContent = on ? '完成' : '选择';
+    document.querySelectorAll('[data-cls="tr-ck"]').forEach(c => { c.classList.toggle('show', on); if (!on) c.classList.remove('on'); });
+    document.getElementById('tr-bbar').classList.toggle('show', on);
+    document.getElementById('nav-trash').style.display = on ? 'none' : 'flex';
+    document.getElementById('trash-sel-banner').classList.toggle('show', on);
+    updTrCnt();
+  }
+}
+
+function updCnt(ctx) {
+  if (ctx === 'gallery') {
+    const n = document.querySelectorAll('#s-gallery .ck.on').length;
+    document.getElementById('gallery-cnt').textContent = `已选择 ${n} 项`;
+    document.getElementById('gallery-sel-count').textContent = `已选择 ${n} 项`;
+  }
+}
+
+function updTrCnt() {
+  const n = document.querySelectorAll('#s-trash .ck.on').length;
+  document.getElementById('trash-sel-count').textContent = `已选择 ${n} 项`;
+}
+
+function selectAll(ctx) {
+  if (ctx === 'gallery') document.querySelectorAll('#s-gallery [data-cls="g-ck"].show').forEach(c => c.classList.add('on'));
+  else if (ctx === 'trash') document.querySelectorAll('#s-trash [data-cls="tr-ck"].show').forEach(c => c.classList.add('on'));
+  updCnt(ctx);
+  updTrCnt();
+}
+
+function selectGroup(btn) {
+  const dg = btn.closest('.date-group');
+  const cks = dg.querySelectorAll('.ck.show');
+  if (cks.length === 0) {
+    const impCks = dg.querySelectorAll('[data-cls="imp-ck"]');
+    const gi_list = dg.querySelectorAll('.gi');
+    const idxList = [];
+    gi_list.forEach(gi => idxList.push(parseInt(gi.dataset.idx)));
+    const allOn = idxList.every(idx => importQueue.includes(idx));
+    if (allOn) {
+      idxList.forEach(idx => removeFromQueue(idx));
+    } else {
+      idxList.forEach(idx => { if (!importQueue.includes(idx)) addToQueue(idx); });
+    }
+    btn.textContent = allOn ? '全选' : '取消全选';
+    updateImportChecks();
+    return;
+  }
+  const allOn = [...cks].every(c => c.classList.contains('on'));
+  cks.forEach(c => c.classList.toggle('on', !allOn));
+  btn.textContent = allOn ? '全选' : '取消全选';
+  updCnt('gallery');
+  updTrCnt();
+}
+
+/* Long press for gallery multi-select */
+let lt;
+document.getElementById('gallery-scroll').addEventListener('mousedown', e => {
+  if (e.target.closest('.gi') && !e.target.closest('.ck')) {
+    lt = setTimeout(() => toggleMulti('gallery'), 500);
+  }
+});
+document.getElementById('gallery-scroll').addEventListener('mouseup', () => clearTimeout(lt));
+document.getElementById('gallery-scroll').addEventListener('mouseleave', () => clearTimeout(lt));
+
+/* ========== Navigation ========== */
+function go(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + n).classList.add('active');
+  document.querySelectorAll('.pnav button').forEach(b => b.classList.remove('act'));
+  const m = {gallery:0, import:1, 'gallery-viewer':2, 'ext-viewer':3, trash:4};
+  const b = document.querySelectorAll('.pnav button')[m[n]];
+  if (b) b.classList.add('act');
+  document.getElementById('sbar').classList.toggle('dk', n === 'gallery-viewer' || n === 'ext-viewer');
+  if (n === 'ext-viewer') showEvImage();
+}
+
+/* ========== Dialogs ========== */
+function showDlg(id) { document.getElementById(id).classList.add('show'); }
+function hideDlg(id) { document.getElementById(id).classList.remove('show'); }
+
+/* ========== Toast & Snackbar ========== */
+function toast(m) {
+  const e = document.getElementById('toast');
+  e.textContent = m;
+  e.style.opacity = '1';
+  e.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => { e.style.opacity = '0'; e.style.transform = 'translateX(-50%) translateY(-20px)'; }, 2500);
+}
+function showSnack(id) { const e = document.getElementById(id); e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 3500); }
+function hideSnack(id) { document.getElementById(id).classList.remove('show'); toast('已撤销'); }
+
+/* ========== Gestures: Gallery Viewer ========== */
+let gvDrag = false, gvSy = 0;
+const gvW = document.getElementById('gv-w'), gvI = document.getElementById('gv-i');
+gvI.src = imgs[0];
+gvW.addEventListener('mousedown', e => { gvSy = e.clientY; gvDrag = true; });
+gvW.addEventListener('mousemove', e => {
+  if (!gvDrag) return;
+  const dy = e.clientY - gvSy;
+  gvI.style.transform = `translateY(${dy * 0.5}px) scale(${Math.max(0.8, 1 - Math.abs(dy) * 0.001)})`;
+  document.getElementById('gv-ti').classList.toggle('vis', dy < -40);
+  document.getElementById('gv-bi').classList.toggle('vis', dy > 40);
+});
+gvW.addEventListener('mouseup', e => {
+  if (!gvDrag) return;
+  gvDrag = false;
+  const dy = e.clientY - gvSy;
+  gvI.style.transform = '';
+  document.getElementById('gv-ti').classList.remove('vis');
+  document.getElementById('gv-bi').classList.remove('vis');
+  if (dy < -70) { showSnack('gv-sk'); }
+  else if (dy > 70) go('gallery');
+});
+gvW.addEventListener('mouseleave', () => {
+  gvDrag = false; gvI.style.transform = '';
+  document.getElementById('gv-ti').classList.remove('vis');
+  document.getElementById('gv-bi').classList.remove('vis');
+});
+
+/* Left/Right click nav for gallery viewer */
+gvW.addEventListener('click', e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  let idx = parseInt(gvI.dataset.idx || 0);
+  if (x < r.width * 0.25) idx = Math.max(0, idx - 1);
+  else if (x > r.width * 0.75) idx = Math.min(imgs.length - 1, idx + 1);
+  gvI.dataset.idx = idx;
+  gvI.src = imgs[idx];
+});
+
+/* ========== Gestures: External Viewer ========== */
+let evDrag = false, evSy = 0;
+const evW = document.getElementById('ev-w'), evI = document.getElementById('ev-i');
+evW.addEventListener('mousedown', e => { evSy = e.clientY; evDrag = true; });
+evW.addEventListener('mousemove', e => {
+  if (!evDrag) return;
+  const dy = e.clientY - evSy;
+  evI.style.transform = `translateY(${dy * 0.5}px) scale(${Math.max(0.8, 1 - Math.abs(dy) * 0.001)})`;
+  document.getElementById('ev-ti').classList.toggle('vis', dy < -40);
+  document.getElementById('ev-bi').classList.toggle('vis', dy > 40);
+});
+evW.addEventListener('mouseup', e => {
+  if (!evDrag) return;
+  evDrag = false;
+  const dy = e.clientY - evSy;
+  evI.style.transform = '';
+  document.getElementById('ev-ti').classList.remove('vis');
+  document.getElementById('ev-bi').classList.remove('vis');
+  if (dy < -70) toast('已隐藏');
+  else if (dy > 70) { addToQueue(currentEvIdx); updateImportChecks(); }
+});
+evW.addEventListener('mouseleave', () => {
+  evDrag = false; evI.style.transform = '';
+  document.getElementById('ev-ti').classList.remove('vis');
+  document.getElementById('ev-bi').classList.remove('vis');
+});
+
+/* Left/Right click nav for ext viewer */
+evW.addEventListener('click', e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const curPos = extItems.indexOf(currentEvIdx);
+  if (x < r.width * 0.25 && curPos > 0) currentEvIdx = extItems[curPos - 1];
+  else if (x > r.width * 0.75 && curPos < extItems.length - 1) currentEvIdx = extItems[curPos + 1];
+  showEvImage();
+});
+
+/* Initial state */
+updateQueueUI();
+</script>
+</body>
+</html>

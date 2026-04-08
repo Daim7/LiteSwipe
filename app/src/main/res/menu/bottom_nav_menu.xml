@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_gallery"
+        android:icon="@android:drawable/ic_menu_gallery"
+        android:title="@string/tab_photos" />
+
+    <item
+        android:id="@+id/nav_import"
+        android:icon="@android:drawable/stat_sys_download"
+        android:title="@string/tab_import" />
+
+    <item
+        android:id="@+id/nav_trash"
+        android:icon="@android:drawable/ic_menu_delete"
+        android:title="@string/tab_trash" />
+
+</menu>

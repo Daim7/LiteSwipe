@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.liteswipe.app.ui.viewer.PhotoViewContainer xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <com.github.chrisbanes.photoview.PhotoView
+        android:id="@+id/photoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter" />
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/playerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:controller_layout_id="@layout/custom_player_controls"
+        app:use_controller="true"
+        app:show_timeout="3000"
+        app:resize_mode="fit" />
+
+    <TextView
+        android:id="@+id/tvLiveBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="60dp"
+        android:background="@drawable/bg_live_badge"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="3dp"
+        android:text="LIVE"
+        android:textColor="@android:color/white"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+</com.liteswipe.app.ui.viewer.PhotoViewContainer>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/ivThumbnail"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="true"
+        android:scaleType="centerCrop" />
+
+    <!-- Motion Photo (LIVE) badge -->
+    <TextView
+        android:id="@+id/tvLiveBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="4dp"
+        android:background="@drawable/bg_live_badge"
+        android:paddingHorizontal="4dp"
+        android:paddingVertical="1dp"
+        android:text="LIVE"
+        android:textColor="@android:color/white"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- Video duration label -->
+    <TextView
+        android:id="@+id/tvDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="4dp"
+        android:background="@drawable/bg_duration"
+        android:paddingHorizontal="5dp"
+        android:paddingVertical="1dp"
+        android:textColor="@android:color/white"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- Selection check background -->
+    <View
+        android:id="@+id/viewCheckBg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/check_unselected"
+        android:visibility="gone" />
+
+    <!-- Selection check icon -->
+    <ImageView
+        android:id="@+id/viewCheck"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="6dp"
+        android:background="@drawable/bg_check_circle"
+        android:visibility="gone" />
+
+    <!-- Queue badge -->
+    <TextView
+        android:id="@+id/tvQueueBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="4dp"
+        android:background="@color/ios_blue"
+        android:paddingHorizontal="4dp"
+        android:paddingVertical="1dp"
+        android:text="待导入"
+        android:textColor="@android:color/white"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+</FrameLayout>

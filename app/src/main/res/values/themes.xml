@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.LiteSwipe" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#007AFF</item>
+        <item name="colorPrimaryContainer">#D6E4FF</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">#5856D6</item>
+        <item name="colorError">#FF3B30</item>
+        <item name="colorSurface">@android:color/white</item>
+        <item name="colorOnSurface">#1C1C1E</item>
+        <item name="colorSurfaceVariant">#F2F2F7</item>
+        <item name="android:windowBackground">#F2F2F7</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+    </style>
+
+    <style name="StorageTabText" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="textAllCaps">false</item>
+    </style>
+
+    <style name="Theme.LiteSwipe.Viewer" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="colorPrimary">#007AFF</item>
+        <item name="colorError">#FF3B30</item>
+    </style>
+
+</resources>
